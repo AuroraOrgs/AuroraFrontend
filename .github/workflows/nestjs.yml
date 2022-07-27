@@ -3,8 +3,6 @@ name: Nest.js ci/cd pipeline
 on:
   push:
     branches: ['master']
-  pull_request:
-    branches: ['master']
 
 jobs:
   build:
@@ -18,7 +16,7 @@ jobs:
       - name: send notification to aurora group
         uses: fjogeleit/http-request-action@v1
         with:
-          url: 'https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage?chat_id=${{ secrets.TELEGRAM_TO }}&text=[success] aurora-telegram container ready'
+          url: 'https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage?chat_id=${{ secrets.TELEGRAM_TO }}&text=[success] aurora-telegram container ready | ${{github.repository}}'
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
 
@@ -31,6 +29,6 @@ jobs:
       - name: send notification to aurora group
         uses: fjogeleit/http-request-action@v1
         with:
-          url: 'https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage?chat_id=${{ secrets.TELEGRAM_TO }}&text=[success] aurora-telegram published to dev http://134.249.99.75:3000/'
+          url: 'https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage?chat_id=${{ secrets.TELEGRAM_TO }}&text=[success] aurora-telegram published to dev | ${{github.repository}}'
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
