@@ -1,0 +1,58 @@
+name: Nest.js ci/cd pipeline
+
+on:
+  push:
+    branches: ['master']
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: docker stop container
+        run: docker stop $(docker ps -q --filter ancestor=dev-aurora-telegram )
+
+      - name: docker build container
+        run: docker build -t dev-aurora-telegram .
+
+        if: success() 
+      - name: send notification to aurora group when container is built successfully ✅
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: 'https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage?chat_id=${{ secrets.TELEGRAM_TO }}&text=[success] aurora-telegram container ready | ${{github.repository}}'
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+
+        if: failure()
+      - name: send notification to aurora group when container is built unsuccessfully ❌
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: 'https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage?chat_id=${{ secrets.TELEGRAM_TO }}&text=[success] aurora-telegram container cannot be ready | ${{github.repository}}'
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+
+  deploy-dev:
+    if: always()
+    runs-on: self-hosted
+    needs: [build]
+    steps:
+      - name: docker run container
+        run: docker run -d -p3000:3000 --restart=always dev-aurora-telegram
+
+        if: success()
+      - name: send notification to aurora group when container is started successfully ✅
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: 'https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage?chat_id=${{ secrets.TELEGRAM_TO }}&text=[success] aurora-telegram published to dev | ${{github.repository}}'
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          
+        if: failure()
+      - name: send notification to aurora group when container is started unsuccessfully ❌
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: 'https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage?chat_id=${{ secrets.TELEGRAM_TO }}&text=[success] aurora-telegram published to dev | ${{github.repository}}'
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
